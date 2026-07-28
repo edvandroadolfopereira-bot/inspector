@@ -123,13 +123,17 @@ COMANDO:
 
 Use exatamente o caminho retornado no campo `command` do JSON, substituindo cada `\` por `\\`.
 
-Exemplo de JSON (substitua o caminho do uv.exe e do servidor pelos valores reais do seu computador):
+**IMPORTANTE:** O argumento `--directory` diz ao uv em qual pasta do servidor procurar o `pyproject.toml` e instalar as dependências. Sem ele, o servidor pode falhar com erros de módulo ausente.
+
+Exemplo de JSON (substitua os caminhos pelos valores reais do seu computador):
 
     {
       "mcpServers": {
         "windows-mcp": {
           "command": "CAMINHO_RETORNADO_POR_Get-Command_uv_com_barras_duplicadas",
           "args": [
+            "--directory",
+            "C:\\caminho\\absoluto\\do\\servidor",
             "run",
             "python",
             "C:\\caminho\\absoluto\\do\\servidor\\main.py"
@@ -141,9 +145,25 @@ Exemplo de JSON (substitua o caminho do uv.exe e do servidor pelos valores reais
       }
     }
 
-Por exemplo, se `(Get-Command uv).Source` retornou `C:\Users\seunome\.local\bin\uv.exe`, o campo `command` deve ser:
+Por exemplo, se `(Get-Command uv).Source` retornou `C:\Users\seunome\.local\bin\uv.exe` e o servidor está em `C:\projetos\meu-servidor`, o JSON fica:
 
-    "command": "C:\\Users\\seunome\\.local\\bin\\uv.exe"
+    {
+      "mcpServers": {
+        "windows-mcp": {
+          "command": "C:\\Users\\seunome\\.local\\bin\\uv.exe",
+          "args": [
+            "--directory",
+            "C:\\projetos\\meu-servidor",
+            "run",
+            "python",
+            "C:\\projetos\\meu-servidor\\main.py"
+          ],
+          "env": {
+            "PYTHONUTF8": "1"
+          }
+        }
+      }
+    }
 
 ## Passo 5 — validar se o JSON salvo está correto
 
@@ -171,13 +191,13 @@ Troque os caminhos pelos caminhos reais do seu computador.
 
 COMANDO:
 
-    & (Get-Command uv).Source run python "C:\caminho\absoluto\do\servidor\main.py"
+    & (Get-Command uv).Source --directory "C:\caminho\absoluto\do\servidor" run python "C:\caminho\absoluto\do\servidor\main.py"
 
-Se preferir usar o caminho completo do uv.exe obtido em `(Get-Command uv).Source`:
+Se preferir usar o caminho completo do uv.exe:
 
 COMANDO:
 
-    & "CAMINHO_DO_UV_AQUI" run python "C:\caminho\absoluto\do\servidor\main.py"
+    & "CAMINHO_DO_UV_AQUI" --directory "C:\caminho\absoluto\do\servidor" run python "C:\caminho\absoluto\do\servidor\main.py"
 
 Se esse comando falhar, o problema ainda é no ambiente local, no uv, no Python ou no caminho do servidor.
 
@@ -201,24 +221,26 @@ COMANDO:
 
 ## Tabela de erros e correções
 
-| Erro visto                   | Causa                               | Correção                                                   |
-| ---------------------------- | ----------------------------------- | ---------------------------------------------------------- |
-| O termo uv não é reconhecido | uv não instalado ou fora do PATH    | Instale uv e reabra o PowerShell                           |
-| O termo & não é reconhecido  | Você colou crase antes do &         | Digite a linha começando diretamente por &                 |
-| Token ':' inesperado         | Você colou JSON no PowerShell       | Abra o JSON no Notepad e salve no arquivo de configuração  |
-| Token run inesperado         | Você executou EXE entre aspas sem & | Use & antes do caminho entre aspas                         |
-| spawn uv ENOENT              | O cliente MCP não achou uv          | Use o caminho absoluto retornado por (Get-Command uv).Source |
-| Dois blocos JSON no arquivo  | Conteúdo duplicado                  | Apague tudo e deixe somente um objeto JSON principal       |
-| Texto com \n dentro do JSON  | JSON escapado foi colado como texto | Apague esse bloco e cole JSON normal no Notepad            |
-| Caminho errado no JSON       | Placeholder não foi substituído     | Use o caminho exato retornado por (Get-Command uv).Source  |
+| Erro visto                   | Causa                               | Correção                                                        |
+| ---------------------------- | ----------------------------------- | --------------------------------------------------------------- |
+| O termo uv não é reconhecido | uv não instalado ou fora do PATH    | Instale uv e reabra o PowerShell                                |
+| O termo & não é reconhecido  | Você colou crase antes do &         | Digite a linha começando diretamente por &                      |
+| Token ':' inesperado         | Você colou JSON no PowerShell       | Abra o JSON no Notepad e salve no arquivo de configuração       |
+| Token run inesperado         | Você executou EXE entre aspas sem & | Use & antes do caminho entre aspas                              |
+| spawn uv ENOENT              | O cliente MCP não achou uv          | Use o caminho absoluto retornado por (Get-Command uv).Source    |
+| Erro de módulo ausente        | uv não encontrou o pyproject.toml   | Adicione --directory com o caminho da pasta do servidor no args |
+| Dois blocos JSON no arquivo  | Conteúdo duplicado                  | Apague tudo e deixe somente um objeto JSON principal            |
+| Texto com \n dentro do JSON  | JSON escapado foi colado como texto | Apague esse bloco e cole JSON normal no Notepad                 |
+| Caminho errado no JSON       | Placeholder não foi substituído     | Use o caminho exato retornado por (Get-Command uv).Source       |
 
 ## Checklist final
 
 - uv --version funciona sem crases.
 - where.exe uv mostra o caminho do uv.exe.
 - (Get-Command uv).Source retorna o caminho usado no JSON.
-- O comando com & antes do caminho do uv.exe funciona.
+- O comando com & e --directory antes de run funciona no PowerShell.
 - O arquivo claude_desktop_config.json contém mcpServers.
+- O campo args inclui --directory com o caminho da pasta do servidor antes de run.
 - O arquivo tem apenas um objeto JSON principal.
 - O arquivo não contém texto literal com \n.
 - O campo command usa o caminho exato retornado por (Get-Command uv).Source com barras duplicadas.
