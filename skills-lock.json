@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "dev-browser": {
+      "source": "sawyerhood/dev-browser",
+      "sourceType": "github",
+      "skillPath": "skills/dev-browser/SKILL.md",
+      "computedHash": "0754a1014646bf0c4a58eef0d5ec200508a47a208e47172bf0f4b55ce854a80e"
+    },
     "brainstorming": {
       "source": "obra/superpowers",
       "sourceType": "github",
