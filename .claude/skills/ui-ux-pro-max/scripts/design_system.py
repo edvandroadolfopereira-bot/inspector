@@ -16,6 +16,8 @@ Usage:
 import csv
 import json
 import os
+import re
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from core import search, DATA_DIR
@@ -488,6 +490,25 @@ def generate_design_system(query: str, project_name: str = None, output_format: 
 
 
 # ============ PERSISTENCE FUNCTIONS ============
+def safe_path_slug(value: str, fallback: str = "default") -> str:
+    """Convert untrusted text to one portable, non-empty path component."""
+    normalized = unicodedata.normalize("NFKD", str(value or ""))
+    ascii_value = normalized.encode("ascii", "ignore").decode("ascii")
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_value.lower()).strip("-")
+    return slug or fallback
+
+
+def _resolved_child(parent: Path, component: str) -> Path:
+    """Resolve a child and reject paths that escape their intended parent."""
+    resolved_parent = parent.resolve()
+    resolved_child = (resolved_parent / component).resolve()
+    try:
+        resolved_child.relative_to(resolved_parent)
+    except ValueError as exc:
+        raise ValueError(f"Unsafe output path outside {resolved_parent}") from exc
+    return resolved_child
+
+
 def persist_design_system(design_system: dict, page: str = None, output_dir: str = None, page_query: str = None) -> dict:
     """
     Persist design system to design-system/<project>/ folder using Master + Overrides pattern.
@@ -501,14 +522,15 @@ def persist_design_system(design_system: dict, page: str = None, output_dir: str
     Returns:
         dict with created file paths and status
     """
-    base_dir = Path(output_dir) if output_dir else Path.cwd()
+    base_dir = (Path(output_dir) if output_dir else Path.cwd()).resolve()
     
     # Use project name for project-specific folder
     project_name = design_system.get("project_name", "default")
-    project_slug = project_name.lower().replace(' ', '-')
+    project_slug = safe_path_slug(project_name)
     
-    design_system_dir = base_dir / "design-system" / project_slug
-    pages_dir = design_system_dir / "pages"
+    design_system_root = _resolved_child(base_dir, "design-system")
+    design_system_dir = _resolved_child(design_system_root, project_slug)
+    pages_dir = _resolved_child(design_system_dir, "pages")
     
     created_files = []
     
@@ -526,7 +548,8 @@ def persist_design_system(design_system: dict, page: str = None, output_dir: str
     
     # If page is specified, create page override file with intelligent content
     if page:
-        page_file = pages_dir / f"{page.lower().replace(' ', '-')}.md"
+        page_slug = safe_path_slug(page, fallback="page")
+        page_file = _resolved_child(pages_dir, f"{page_slug}.md")
         page_content = format_page_override_md(design_system, page, page_query)
         with open(page_file, 'w', encoding='utf-8') as f:
             f.write(page_content)

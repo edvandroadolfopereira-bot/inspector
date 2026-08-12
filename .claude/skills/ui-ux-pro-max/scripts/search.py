@@ -10,15 +10,15 @@ Domains: style, prompt, color, chart, landing, product, ux, typography
 Stacks: html-tailwind, react, nextjs
 
 Persistence (Master + Overrides pattern):
-  --persist    Save design system to design-system/MASTER.md
-  --page       Also create a page-specific override file in design-system/pages/
+  --persist    Save design system to design-system/<project-slug>/MASTER.md
+  --page       Also create an override in design-system/<project-slug>/pages/
 """
 
 import argparse
 import sys
 import io
 from core import CSV_CONFIG, AVAILABLE_STACKS, MAX_RESULTS, search, search_stack
-from design_system import generate_design_system, persist_design_system
+from design_system import generate_design_system, persist_design_system, safe_path_slug
 
 # Force UTF-8 for stdout/stderr to handle emojis on Windows (cp1252 default)
 if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
@@ -65,8 +65,8 @@ if __name__ == "__main__":
     parser.add_argument("--project-name", "-p", type=str, default=None, help="Project name for design system output")
     parser.add_argument("--format", "-f", choices=["ascii", "markdown"], default="ascii", help="Output format for design system")
     # Persistence (Master + Overrides pattern)
-    parser.add_argument("--persist", action="store_true", help="Save design system to design-system/MASTER.md (creates hierarchical structure)")
-    parser.add_argument("--page", type=str, default=None, help="Create page-specific override file in design-system/pages/")
+    parser.add_argument("--persist", action="store_true", help="Save to design-system/<project-slug>/MASTER.md")
+    parser.add_argument("--page", type=str, default=None, help="Create an override in design-system/<project-slug>/pages/")
     parser.add_argument("--output-dir", "-o", type=str, default=None, help="Output directory for persisted files (default: current directory)")
 
     args = parser.parse_args()
@@ -85,12 +85,12 @@ if __name__ == "__main__":
         
         # Print persistence confirmation
         if args.persist:
-            project_slug = args.project_name.lower().replace(' ', '-') if args.project_name else "default"
+            project_slug = safe_path_slug(args.project_name)
             print("\n" + "=" * 60)
             print(f"✅ Design system persisted to design-system/{project_slug}/")
             print(f"   📄 design-system/{project_slug}/MASTER.md (Global Source of Truth)")
             if args.page:
-                page_filename = args.page.lower().replace(' ', '-')
+                page_filename = safe_path_slug(args.page, fallback="page")
                 print(f"   📄 design-system/{project_slug}/pages/{page_filename}.md (Page Overrides)")
             print("")
             print(f"📖 Usage: When building a page, check design-system/{project_slug}/pages/[page].md first.")
