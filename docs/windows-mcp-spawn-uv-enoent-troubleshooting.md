@@ -228,7 +228,7 @@ COMANDO:
 | Token ':' inesperado         | Você colou JSON no PowerShell       | Abra o JSON no Notepad e salve no arquivo de configuração       |
 | Token run inesperado         | Você executou EXE entre aspas sem & | Use & antes do caminho entre aspas                              |
 | spawn uv ENOENT              | O cliente MCP não achou uv          | Use o caminho absoluto retornado por (Get-Command uv).Source    |
-| Erro de módulo ausente        | uv não encontrou o pyproject.toml   | Adicione --directory com o caminho da pasta do servidor no args |
+| Erro de módulo ausente       | uv não encontrou o pyproject.toml   | Adicione --directory com o caminho da pasta do servidor no args |
 | Dois blocos JSON no arquivo  | Conteúdo duplicado                  | Apague tudo e deixe somente um objeto JSON principal            |
 | Texto com \n dentro do JSON  | JSON escapado foi colado como texto | Apague esse bloco e cole JSON normal no Notepad                 |
 | Caminho errado no JSON       | Placeholder não foi substituído     | Use o caminho exato retornado por (Get-Command uv).Source       |
